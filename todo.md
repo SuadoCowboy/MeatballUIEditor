@@ -1,11 +1,11 @@
 # TODOS
-- There should be something like a editor mode and a run mode. Editor mode can move, resize, anchor, set events that calls a command prompt string, and run mode is self explanatory
+- there should be something like a editor mode and a run mode. Editor mode can move, resize, anchor, set events that calls a command prompt string, and run mode is self explanatory
 
-- Test multiple dynamic panels together
+- test multiple dynamic panels together
 
-- Implement UI commands for
+- implement UI commands for
 
-- Ui creation example: for Console, the user have some options: mainPanel, closeButton, sendButton(optional), inputBox and OutputTextBox. They also can modify events that the Console allowed, like: mainPanel::onMove, mainPanel::onResize and mainPanel::onResizeStop. The rest of the events are handled by the ConsoleUI code. closeButton::onRelease can not be changed because by default it should set ConsoleUI.visible to false. sendButton is the same thing, it should always send to the output and clear the input text. It would look like this in cfg file:
+- ui creation example: for Console, the user have some options: mainPanel, closeButton, sendButton(optional), inputBox and OutputTextBox. They also can modify events that the Console allowed, like: mainPanel::onMove, mainPanel::onResize and mainPanel::onResizeStop. The rest of the events are handled by the ConsoleUI code. closeButton::onRelease can not be changed because by default it should set ConsoleUI.visible to false. sendButton is the same thing, it should always send to the output and clear the input text. It would look like this in cfg file:
 ```c++
 // THIS IS STILL ON THINKING, THINGS MIGHT NOT BE LIKE THIS ON RELEASE OF THE FIRST VERSION
 // Also add something related to resizing. Something like a anchor (see how game engines work).
