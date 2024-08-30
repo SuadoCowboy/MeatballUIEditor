@@ -1,3 +1,0 @@
-C:/Users/home/Documents/Lucca/Projetos/cpp/MeatballUIEditor/build/CMakeFiles/UIEditor.dir
-C:/Users/home/Documents/Lucca/Projetos/cpp/MeatballUIEditor/build/CMakeFiles/edit_cache.dir
-C:/Users/home/Documents/Lucca/Projetos/cpp/MeatballUIEditor/build/CMakeFiles/rebuild_cache.dir
