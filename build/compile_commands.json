@@ -1,0 +1,14 @@
+[
+{
+  "directory": "C:/Users/home/Documents/Lucca/Projetos/cpp/MeatballUIEditor/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe  @CMakeFiles/UIEditor.dir/includes_CXX.rsp -Wall -Wextra -Werror -g -std=gnu++17 -o CMakeFiles\\UIEditor.dir\\src\\GameInterface.cpp.obj -c C:\\Users\\home\\Documents\\Lucca\\Projetos\\cpp\\MeatballUIEditor\\src\\GameInterface.cpp",
+  "file": "C:/Users/home/Documents/Lucca/Projetos/cpp/MeatballUIEditor/src/GameInterface.cpp",
+  "output": "CMakeFiles/UIEditor.dir/src/GameInterface.cpp.obj"
+},
+{
+  "directory": "C:/Users/home/Documents/Lucca/Projetos/cpp/MeatballUIEditor/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe  @CMakeFiles/UIEditor.dir/includes_CXX.rsp -Wall -Wextra -Werror -g -std=gnu++17 -o CMakeFiles\\UIEditor.dir\\src\\Main.cpp.obj -c C:\\Users\\home\\Documents\\Lucca\\Projetos\\cpp\\MeatballUIEditor\\src\\Main.cpp",
+  "file": "C:/Users/home/Documents/Lucca/Projetos/cpp/MeatballUIEditor/src/Main.cpp",
+  "output": "CMakeFiles/UIEditor.dir/src/Main.cpp.obj"
+}
+]

@@ -1,0 +1,3 @@
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\UIEditor.dir/objects.a
+C:\msys64\ucrt64\bin\ar.exe qc CMakeFiles\UIEditor.dir/objects.a @CMakeFiles\UIEditor.dir\objects1.rsp
+C:\msys64\ucrt64\bin\g++.exe -Wall -Wextra -Werror -g -Wl,--whole-archive CMakeFiles\UIEditor.dir/objects.a -Wl,--no-whole-archive -o UIEditor.exe -Wl,--out-implib,libUIEditor.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\UIEditor.dir\linkLibs.rsp

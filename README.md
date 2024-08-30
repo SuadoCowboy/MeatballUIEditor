@@ -1,0 +1,2 @@
+# Meatball's UIEditor
+If the name isn't already self explanatory, this project focuses on creating a program that can create/edit user interfaces so that not only developers but also players could edit the ui freely.
