@@ -1,6 +1,6 @@
 #pragma once
 
-#include <functional>
+#include <variant>
 
 #include <HayBCMD.h>
 #include <Meatball/Console.h>
@@ -9,30 +9,13 @@
 
 #include <raylib.h>
 
-#define UI_TYPE_BUTTON 0
-#define UI_TYPE_DYNAMIC_PANEL 1
+typedef std::variant<Meatball::Button, Meatball::DynamicPanel> UIObjectVariantType;
 
 struct UIObject {
-    void* object = nullptr;
+    UIObjectVariantType object;
     const char* name;
-    unsigned char type;
-    void (*update)(void*);
-    void (*draw)(void*);
 
-    UIObject(void* object, const char* name, unsigned char type,
-            void (*update)(void*), void (*draw)(void*))
-        : object(object), name(name), type(type), update(update), draw(draw) {}
-    
-    ~UIObject() {
-        switch (type) {
-            case UI_TYPE_BUTTON:
-                delete (Meatball::Button*)object;
-                break;
-            case UI_TYPE_DYNAMIC_PANEL:
-                delete (Meatball::DynamicPanel*)object;
-                break;
-        }
-    }
+    UIObject(const UIObjectVariantType& object, const char* name) : object(object), name(name) {}
 };
 
 struct UIOption {
@@ -43,4 +26,4 @@ struct UIOption {
     UIOption(const char* text, Font& font, unsigned char type) : text(text), font(font), type(type) {}
 };
 
-UIObject* createUIObject(const char* name, std::vector<UIObject*>& uiObjects, const Vector2& position, unsigned char type, const Vector2& renderSize);
+UIObject& createUIObject(const char* name, const UIObjectVariantType& object, std::vector<UIObject>& uiObjects);

@@ -18,17 +18,18 @@
 #include <Meatball/Utils/Utils.h>
 #include <Meatball/Utils/CvarFuncs.h>
 #include <Meatball/IScene.h>
+#include <Meatball/Utils/Json.h>
 
 #include "GameInterface.h"
+#include "EditorMode.h"
 
 Font consoleGeneralFont, consoleLabelFont, defaultFont;
 
-std::vector<UIObject*> uiObjects;
+Meatball::ConsoleUI* pConsoleUI;
+
+std::vector<UIObject> uiObjects;
 
 Vector2 viewport;
-
-// CVARS
-bool uiEditorMode = true;
 
 Color uiColor = BLACK, uiHoveredColor = BLACK;
 std::string uiAnchor = "";
@@ -39,38 +40,62 @@ static void resetUiCvars() {
     uiAnchor = "";
 }
 
-bool drawOptions = false;
 // TODO: fully customizable program in the future :D
 // for now becuse ui stuff is not fully developed yet,
 // we don't need to worry about customizable stuff in this
 // program. But in the end this should be also customizable.
-std::vector<UIOption> options;
-// options background color
-Color optionsColor = {20, 20, 20, 255};
-Color optionsTextColor = LIGHTGRAY;
-Color optionsHoveredTextColor = WHITE;
-Font optionsFont;
-Vector2 optionsPosition = {0,0};
-
-Meatball::ConsoleUI* pConsoleUI;
 
 #pragma region commands
 
 static void uiCreateButtonCommand(void*, HayBCMD::Command&, const std::vector<std::string>& args) {
-    UIObject* buttonObj = createUIObject(args[0].c_str(), uiObjects, {0.0f,0.0f}, UI_TYPE_BUTTON, viewport);
-    auto button = (Meatball::Button*)buttonObj->object;
-    button->config->color = uiColor;
-    button->config->hoveredColor = uiHoveredColor;
+    Meatball::Button button = Meatball::Button((Rectangle){0.0f, 0.0f, viewport.x*0.1f, viewport.y*0.06f});
+    button.config = &Meatball::Defaults::buttonConfig;
+
+    UIObject& buttonObj = createUIObject(args[0].c_str(), button, uiObjects);
+    std::visit([](auto& obj) {
+        if constexpr (std::is_same_v<decltype(obj), Meatball::Button&>) {
+            obj.config->color = uiColor;
+            obj.config->hoveredColor = uiHoveredColor;
+        }
+    }, buttonObj.object);
 
     resetUiCvars();
 }
 
-static void showUiOptionsCommand(void*, HayBCMD::Command&, const std::vector<std::string>& args) {
-    if (!uiEditorMode) return;
+static void reloadFonts(void*, HayBCMD::Command&, const std::vector<std::string>&) {
+    json consoleData;
+    if (!Meatball::readJSONFile("data/console.json", consoleData)) {
+        Meatball::Console::print(HayBCMD::ERROR, "could not reload fonts because could not read \"data/console.json\" file\n");
+        return;
+    }
 
-    drawOptions = std::stoi(args[0]);
-    optionsPosition = GetMousePosition();
+    std::string fontPath = "";
+    GET_STRING_FROM_JSON(consoleData, "font", fontPath, "data/console.json");
+    
+    if (fontPath != "") {
+        if (!Meatball::Defaults::loadConsoleFonts(*pConsoleUI, fontPath, consoleGeneralFont, consoleLabelFont))
+            Meatball::Console::print(HayBCMD::WARNING, "something went wrong when loading console fonts\n");
+        else
+            Meatball::Console::print(HayBCMD::ECHO, "successfully reloaded console fonts\n");
+        return;
+    }
+
+    Meatball::Console::print(HayBCMD::WARNING, "font not found in data/console.json. Using defaultFont\n");
+    
+    json initData;
+    if (!Meatball::readJSONFile("data/init.json", initData)) {
+        Meatball::Console::print(HayBCMD::ERROR, "could not reload fonts because could not read \"data/init.json\" file\n");
+        return;
+    }
+
+    if (initData.count("defaultFont") == 0 || !initData["defaultFont"].is_string()) {
+        Meatball::Console::print(HayBCMD::ERROR, "could not reload fonts because it's either missing defaultFont or type does not match. In \"data/init.json\" file\n");
+        return;
+    }
+
+    Meatball::Defaults::loadConsoleFonts(*pConsoleUI, initData["defaultFont"], consoleGeneralFont, consoleLabelFont);
 }
+
 #pragma endregion
 
 bool stringToInt(const std::string& str, int& buffer) {
@@ -83,8 +108,8 @@ bool stringToInt(const std::string& str, int& buffer) {
 }
 
 static void initCommands() {
-    HayBCMD::Command("ui_create_button", 1, 1, uiCreateButtonCommand, "<name> - creates a button using the defined data by other ui commands");
-    HayBCMD::Command("show_ui_options", 1, 1, showUiOptionsCommand, "<draw> - draw options where mouse position is at");
+    HayBCMD::Command("ui_button_create", 1, 1, uiCreateButtonCommand, "<name> - creates a button using the defined data by other ui commands");
+    HayBCMD::Command("fonts_reload", 0, 0, reloadFonts, "- reload fonts");
 
     HayBCMD::CVARStorage::setCvar("ui_editor_mode",
         &uiEditorMode,
@@ -137,10 +162,11 @@ static void init(int width, int height) {
 
     defaultFont = GetFontDefault();
 
-    Meatball::Defaults::init("data/meatdata/Init.meatdata", defaultFont);
+    Meatball::Defaults::init("data/init.json", defaultFont);
+    
     pConsoleUI = new Meatball::ConsoleUI(Meatball::Defaults::initLocalConsole(
         {0, 0, 800 * 0.5f, 600 * 0.75f},
-        "data/meatdata/Console.meatdata",
+        "data/console.json",
         consoleGeneralFont,
         consoleLabelFont
     ));
@@ -150,26 +176,26 @@ static void init(int width, int height) {
     Meatball::Input::mapMouseKeys();
 
     initCommands();
-
-    optionsFont = GetFontDefault();
 }
 
 int main() {
     init(800, 600);
     SetExitKey(KEY_NULL);
     pConsoleUI->visible = false;
-
-    options.push_back({"Create Button", optionsFont, UI_TYPE_BUTTON});
-
-    float optionsMinWidth = 0.0f;
-    for (auto& option : options) {
-        float width = Meatball::measureTextWidth(option.font, option.font.baseSize, option.text);
-        if (width > optionsMinWidth) optionsMinWidth = width+4;
-    }
     
     HayBCMD::execConfigFile("data/cfg/config.cfg", Meatball::Console::variables);
 
     Color backgroundColor = {0,0,0,255};
+
+    const auto handleUIObjects = [](auto& obj){
+        if constexpr (std::is_same_v<decltype(obj), Meatball::Button&>) {
+            obj.update();
+            Meatball::drawRect(obj.rect, obj.isHovered()? obj.config->hoveredColor : obj.config->color);
+        } else if constexpr (std::is_same_v<decltype(obj), Meatball::DynamicPanel&>) {
+            obj.update();
+            Meatball::drawRect(obj.rect, obj.config->color);
+        }
+    };
 
     while (!WindowShouldClose()) {
         ClearBackground(backgroundColor);
@@ -180,10 +206,12 @@ int main() {
 
         if (IsWindowResized()) {
             float newScreenWidth = GetRenderWidth(), newScreenHeight = GetRenderHeight();
-            //Vector2 ratio = { newScreenWidth / viewport.x, newScreenHeight / viewport.y };
+            Vector2 ratio = { newScreenWidth / viewport.x, newScreenHeight / viewport.y };
 
             viewport.x = newScreenWidth;
             viewport.y = newScreenHeight;
+
+            pConsoleUI->onResize(ratio.x, ratio.y);
         }
 
         Meatball::Input::update(false);
@@ -191,24 +219,7 @@ int main() {
         BeginDrawing();
 
         for (auto& obj : uiObjects) {
-            obj->update(obj->object);
-            obj->draw(obj->object);
-        }
-
-        if (uiEditorMode && drawOptions) {
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-                drawOptions = false;
-            
-            DrawRectangle(optionsPosition.x, optionsPosition.y, optionsMinWidth, options.size()*optionsFont.baseSize, optionsColor);
-            for (unsigned char i = 0; i < options.size(); ++i) {
-                if (CheckCollisionPointRec(GetMousePosition(), {optionsPosition.x, optionsPosition.y, optionsMinWidth, (float)optionsFont.baseSize})) {
-                    Meatball::drawText(optionsFont, optionsFont.baseSize, options[i].text, optionsPosition.x+2, optionsPosition.y+i*optionsFont.baseSize, optionsHoveredTextColor);
-                
-                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-                        createUIObject(HayBCMD::formatString("Item{}", uiObjects.size()).c_str(), uiObjects, optionsPosition, options[i].type, viewport);
-                } else
-                    Meatball::drawText(optionsFont, optionsFont.baseSize, options[i].text, optionsPosition.x+2, optionsPosition.y+i*optionsFont.baseSize, optionsTextColor);
-            }
+            std::visit(handleUIObjects, obj.object);
         }
 
         pConsoleUI->update();
@@ -217,7 +228,6 @@ int main() {
         EndDrawing();
     }
 
-    for (auto& obj : uiObjects) {
-        delete obj;
-    }
+    delete pConsoleUI;
+    pConsoleUI = nullptr;
 }
