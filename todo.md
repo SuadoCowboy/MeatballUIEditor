@@ -3,7 +3,7 @@
 
 - test multiple dynamic panels together
 
-- implement UI commands for
+- implement UI commands
 
 - ui creation example: for Console, the user have some options: mainPanel, closeButton, sendButton(optional), inputBox and OutputTextBox. They also can modify events that the Console allowed, like: mainPanel::onMove, mainPanel::onResize and mainPanel::onResizeStop. The rest of the events are handled by the ConsoleUI code. closeButton::onRelease can not be changed because by default it should set ConsoleUI.visible to false. sendButton is the same thing, it should always send to the output and clear the input text. It would look like this in cfg file:
 ```c++
