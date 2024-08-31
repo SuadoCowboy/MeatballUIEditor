@@ -17,7 +17,6 @@
 #include <Meatball/Utils/DrawFuncs.h>
 #include <Meatball/Utils/Utils.h>
 #include <Meatball/Utils/CvarFuncs.h>
-#include <Meatball/IScene.h>
 #include <Meatball/Utils/Json.h>
 
 #include "GameInterface.h"
@@ -33,6 +32,8 @@ Vector2 viewport;
 
 Color uiColor = BLACK, uiHoveredColor = BLACK;
 std::string uiAnchor = "";
+
+bool shouldRunWindow = false;
 
 static void resetUiCvars() {
     uiColor = BLACK;
@@ -62,7 +63,7 @@ static void uiCreateButtonCommand(void*, HayBCMD::Command&, const std::vector<st
     resetUiCvars();
 }
 
-static void reloadFonts(void*, HayBCMD::Command&, const std::vector<std::string>&) {
+static void reloadFontsCommand(void*, HayBCMD::Command&, const std::vector<std::string>&) {
     json consoleData;
     if (!Meatball::readJSONFile("data/console.json", consoleData)) {
         Meatball::Console::print(HayBCMD::ERROR, "could not reload fonts because could not read \"data/console.json\" file\n");
@@ -96,6 +97,10 @@ static void reloadFonts(void*, HayBCMD::Command&, const std::vector<std::string>
     Meatball::Defaults::loadConsoleFonts(*pConsoleUI, initData["defaultFont"], consoleGeneralFont, consoleLabelFont);
 }
 
+static void quitCommand(void*, HayBCMD::Command&, const std::vector<std::string>&) {
+    shouldRunWindow = false;
+}
+
 #pragma endregion
 
 bool stringToInt(const std::string& str, int& buffer) {
@@ -109,10 +114,11 @@ bool stringToInt(const std::string& str, int& buffer) {
 
 static void initCommands() {
     HayBCMD::Command("ui_button_create", 1, 1, uiCreateButtonCommand, "<name> - creates a button using the defined data by other ui commands");
-    HayBCMD::Command("fonts_reload", 0, 0, reloadFonts, "- reload fonts");
+    HayBCMD::Command("fonts_reload", 0, 0, reloadFontsCommand, "- reload fonts");
+    HayBCMD::Command("quit", 0, 0, quitCommand, "closes the program");
 
     HayBCMD::CVARStorage::setCvar("ui_editor_mode",
-        &uiEditorMode,
+        &editorMode,
         HayBCMD::CVARUtils::setBoolean,
         HayBCMD::CVARUtils::getBoolean,
         "1/0 - whether should run in editor mode or ui logic"
@@ -139,7 +145,7 @@ static void initCommands() {
         Meatball::CVARFuncs::getColor,
         "");
     HayBCMD::CVARStorage::setCvar(
-        "ui_hovered_color",
+        "ui_color_hovered",
         &uiHoveredColor,
         Meatball::CVARFuncs::setColor,
         Meatball::CVARFuncs::getColor,
@@ -152,7 +158,7 @@ static void initCommands() {
         "");
 
     Meatball::Input::allowedUiCommands.push_back("draw_local_console");
-    //Meatball::Input::allowedUiCommands.push_back("quit");
+    Meatball::Input::allowedUiCommands.push_back("quit");
 }
 
 static void init(int width, int height) {
@@ -179,7 +185,7 @@ static void init(int width, int height) {
 }
 
 int main() {
-    init(800, 600);
+    init(1280, 720);
     SetExitKey(KEY_NULL);
     pConsoleUI->visible = false;
     
@@ -187,7 +193,7 @@ int main() {
 
     Color backgroundColor = {0,0,0,255};
 
-    const auto handleUIObjects = [](auto& obj){
+    const auto handleUIObject = [](auto& obj) {
         if constexpr (std::is_same_v<decltype(obj), Meatball::Button&>) {
             obj.update();
             Meatball::drawRect(obj.rect, obj.isHovered()? obj.config->hoveredColor : obj.config->color);
@@ -197,7 +203,12 @@ int main() {
         }
     };
 
-    while (!WindowShouldClose()) {
+    Editor editor;
+
+    shouldRunWindow = true;
+    while (shouldRunWindow) {
+        if (WindowShouldClose()) shouldRunWindow = false;
+
         ClearBackground(backgroundColor);
 
         float dt = GetFrameTime();
@@ -212,18 +223,23 @@ int main() {
             viewport.y = newScreenHeight;
 
             pConsoleUI->onResize(ratio.x, ratio.y);
+            editor.onResize(ratio.x, ratio.y);
         }
 
         Meatball::Input::update(false);
 
         BeginDrawing();
 
-        for (auto& obj : uiObjects) {
-            std::visit(handleUIObjects, obj.object);
-        }
+        for (auto& obj : uiObjects)
+            std::visit(handleUIObject, obj.object);
 
         pConsoleUI->update();
         pConsoleUI->draw();
+
+        if (editorMode) {
+            editor.update();
+            editor.draw();
+        }
 
         EndDrawing();
     }
