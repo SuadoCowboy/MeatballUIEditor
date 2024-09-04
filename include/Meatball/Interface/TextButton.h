@@ -44,10 +44,10 @@ namespace Meatball {
         Config::TextButton *config = &Defaults::textButtonConfig;
 
         VoidFunc onRelease, onHover;
-        Rectangle rect;
+        Rectangle rect = {0.0f,0.0f,0.0f,0.0f};
 
     private:
-        bool hovered;
+        bool hovered = false;
 
         std::string text;
     };
