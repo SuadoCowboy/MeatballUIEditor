@@ -162,7 +162,7 @@ static void initCommands() {
 }
 
 static void init(int width, int height) {
-    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_ALWAYS_RUN);
     InitWindow(width, height, "Meatball's Interface Creator");
     viewport = {(float)GetRenderWidth(), (float)GetRenderHeight()};
 
@@ -233,14 +233,13 @@ int main() {
         for (auto& obj : uiObjects)
             std::visit(handleUIObject, obj.object);
 
-        pConsoleUI->update();
-        pConsoleUI->draw();
-
         if (editorMode) {
             editor.update();
             editor.draw();
         }
 
+        pConsoleUI->update();
+        pConsoleUI->draw();
         EndDrawing();
     }
 
