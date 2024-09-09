@@ -196,7 +196,7 @@ int main() {
     const auto handleUIObject = [](auto& obj) {
         if constexpr (std::is_same_v<decltype(obj), Meatball::Button&>) {
             obj.update();
-            Meatball::drawRect(obj.rect, obj.isHovered()? obj.config->hoveredColor : obj.config->color);
+            Meatball::drawRect(obj.rect, obj.hovered? obj.config->hoveredColor : obj.config->color);
         } else if constexpr (std::is_same_v<decltype(obj), Meatball::DynamicPanel&>) {
             obj.update();
             Meatball::drawRect(obj.rect, obj.config->color);
