@@ -122,19 +122,20 @@ void Editor::update() {
         toolsScrollBar.update(toolsRect);
         toolsScrollBar.updateThumbHeight(toolsRect.height, toolsArray[0].rect.height*toolsHeightDivisor);
 
-        float xMult = 1.0f, yMult = 0.0f;
-        for (unsigned char idx = 1; idx < toolsArraySize; ++idx) {
-            if (idx % toolsWidthDivisor == 0) {
+        Vector2 mousePos = GetMousePosition();
+
+        float yMult = -1.0f;
+        for (unsigned char idx = 0; idx < toolsArraySize; ++idx) {
+            if (idx % toolsWidthDivisor == 0)
                 yMult += 1.0f;
-                xMult = 0.0f;
-            }
 
-            toolsArray[idx].update();
+            if (mousePos.y >= toolsRect.y && mousePos.y <= toolsRect.y+toolsRect.height)
+                toolsArray[idx].update();
+            else
+                toolsArray[idx].hovered = false;
 
-            toolsArray[idx].rect.y = toolsRect.y + yMult * toolsArray[idx].rect.height;
-            toolsArray[idx].rect.y -= toolsArray[idx].rect.height * toolsScrollBar.getScrollValue();
-
-            xMult += 1.0f;
+            toolsArray[idx].rect.y = toolsRect.y + yMult * toolsArray[idx].rect.height
+                            - toolsArray[idx].rect.height * toolsScrollBar.getScrollValue();
         }
     }
 }
@@ -143,6 +144,8 @@ void Editor::draw() {
     drawRect(mainPanel.rect, mainPanel.config->color);
 
     for (unsigned char i = 0; i < toolsArraySize; ++i) {
+        if (toolsArray[i].rect.y > toolsRect.y+toolsRect.height) break;
+        
         BeginScissorMode(toolsRect.x, toolsRect.y, toolsRect.width, toolsRect.height);
         drawRect({
             toolsArray[i].rect.x,
@@ -150,7 +153,7 @@ void Editor::draw() {
             toolsArray[i].rect.width,
             toolsArray[i].rect.height
             },
-            toolsArray[i].isHovered() ? toolsArray[i].config->hoveredColor : toolsArray[i].config->color);
+            toolsArray[i].hovered? toolsArray[i].config->hoveredColor : toolsArray[i].config->color);
         
         toolsArray[i].drawText();
         EndScissorMode();
